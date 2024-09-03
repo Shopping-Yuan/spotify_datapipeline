@@ -1,0 +1,105 @@
+services:
+  selenium-chrome:
+      image: selenium/standalone-chrome:120.0
+      ports:
+        - "4444:4444"
+      restart: always #unless-stopped
+
+
+  airflow-webserver:
+      build:
+        context: .
+        dockerfile: airflow_dockerfile
+      depends_on:
+        - selenium-chrome
+      restart: always
+
+      environment:
+        - PYTHONPATH=/opt/airflow/
+        - SELENIUM_URL=http://selenium-chrome:4444/wd/hub
+        - AIRFLOW__CORE__SQL_ALCHEMY_CONN=sqlite:////opt/airflow/airflow.db
+      # 不用下載範例
+        - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      # 設置服務的端口
+        - AIRFLOW__WEB_SERVER__WEB_SERVER_PORT=8080
+      # 新創建的dag會默認為暫停
+        - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=True
+
+
+      volumes:
+        - ./dags:/opt/airflow/dags
+        - ./plugins:/opt/airflow/plugins
+        - ./utils:/opt/airflow/utils
+        - ./settings:/opt/airflow/settings
+        # - ./spotify_Data:/opt/airflow/spotify_Data
+
+      ports:
+        - "8080:8080"
+      command: >
+        bash -c "
+          sleep 30 &&
+          airflow db init &&
+          airflow webserver"
+      # command: ["webserver"]
+
+  airflow-scheduler:
+      image: apache/airflow:latest
+      restart: always
+      environment:
+          - PYTHONPATH=/opt/airflow/
+          - AIRFLOW__CORE__SQL_ALCHEMY_CONN=sqlite:////opt/airflow/airflow.db
+        # 不用下載範例
+          - AIRFLOW__CORE__LOAD_EXAMPLES=False
+        # 設置服務的端口
+          - AIRFLOW__WEB_SERVER__WEB_SERVER_PORT=8080
+        # 新創建的dag會默認為暫停
+          - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=True
+      volumes:
+          - ./dags:/opt/airflow/dags
+          - ./plugins:/opt/airflow/plugins
+          - ./utils:/opt/airflow/utils
+          - ./settings:/opt/airflow/settings
+          # - ./spotify_Data:/opt/airflow/spotify_Data
+      command: ["scheduler"]
+
+  airflow-worker:
+      image: apache/airflow:latest
+      restart: always
+      environment:
+          - PYTHONPATH=/opt/airflow/
+          
+          - AIRFLOW__CORE__SQL_ALCHEMY_CONN=sqlite:////opt/airflow/airflow.db
+        # 不用下載範例
+          - AIRFLOW__CORE__LOAD_EXAMPLES=False
+        # 設置服務的端口
+          - AIRFLOW__WEB_SERVER__WEB_SERVER_PORT=8080
+        # 新創建的dag會默認為暫停
+          - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=True
+      volumes:
+        - ./dags:/opt/airflow/dags
+        - ./plugins:/opt/airflow/plugins
+        - ./utils:/opt/airflow/utils
+        - ./settings:/opt/airflow/settings
+        # - ./spotify_Data:/opt/airflow/spotify_Data
+      command: ["worker"]
+
+  airflow-init:
+    image: apache/airflow:latest
+    environment:
+        - PYTHONPATH=/opt/airflow/
+        
+        - AIRFLOW__CORE__SQL_ALCHEMY_CONN=sqlite:////opt/airflow/airflow.db
+      # 不用下載範例
+        - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      # 設置服務的端口
+        - AIRFLOW__WEB_SERVER__WEB_SERVER_PORT=8080
+      # 新創建的dag會默認為暫停
+        - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=True
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./plugins:/opt/airflow/plugins
+      - ./utils:/opt/airflow/utils
+      - ./settings:/opt/airflow/settings
+      # - ./spotify_Data:/opt/airflow/spotify_Data
+    command: ["db", "init"]
+    entrypoint: ["airflow"]

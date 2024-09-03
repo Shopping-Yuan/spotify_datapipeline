@@ -1,0 +1,16 @@
+FROM apache/airflow:latest
+USER root
+
+ENV AIRFLOW_HOME=/opt/airflow/
+ENV AIRFLOW__CORE__PLUGINS_FOLDER=/opt/airflow/plugins
+# ENV AIRFLOW__API__AUTH_BACKEND=airflow.api.auth.backend.basic_auth
+
+# 創建目錄並設置權限
+# RUN mkdir -p /spotify_data && \
+#     chmod 777 /spotify_data
+
+USER airflow
+
+RUN pip install --upgrade pip
+
+RUN pip install requests beautifulsoup4 pandas ipython spotipy opencc-python-reimplemented selenium
