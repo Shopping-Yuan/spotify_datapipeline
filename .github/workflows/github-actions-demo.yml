@@ -3,14 +3,15 @@ name: sync to GCS
 on:
   push:
     branches:
-      - shopping  # 或你想要同步的分支
-
+      - shopping
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
