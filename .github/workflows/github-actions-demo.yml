@@ -16,7 +16,7 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
         with:
           version: 'latest'
-          credentials_json: ${{ secrets. }}
+          credentials_json: ${{ secrets.SPOTIFY_DATAPIPELINE_TO_GCS}}
 
       - name: sync to GCS
         run: |
