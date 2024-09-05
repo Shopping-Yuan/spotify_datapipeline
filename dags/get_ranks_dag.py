@@ -258,10 +258,10 @@ def get_ranks_dag():
             df['date'] = today
             df = df[columns]
             current_directory = os.path.dirname(os.path.abspath(__file__))
-            file_path = os.path.join(current_directory, 'spotify_Data',current_date.strftime('%Y'))
+            file_path = os.path.join(current_directory, 'spotify_Data')
             output_dir = f"{file_path}"
             os.makedirs(output_dir, exist_ok=True)
-            file_path = f"{output_dir}{today}_spotify_chart_tw.csv"
+            file_path = f"{output_dir}/{today}_spotify_chart_tw.csv"
             df.to_csv(file_path, index=False, encoding='utf-8')
             print(df.head())
             current_date += timedelta(days=1)
