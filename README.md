@@ -1,11 +1,11 @@
 # tir102-project
 
-1.sudo docker exec -it -u root 59219a10cd32 /bin/bash
+1.sudo docker exec -it -u root <container_id> /bin/bash
 
 2.in container with account airflow : 
 sudo chmod -R 777 /opt/airflow
 
-3.sudo docker exec -it 59219a10cd32 /bin/bash
+3.sudo docker exec -it <container_id> /bin/bash
 
 4.in container with account airflow : 
 airflow users create --username admin --firstname Shopping --lastname Yuan --role Admin --email shopping0789604@gmail.com
