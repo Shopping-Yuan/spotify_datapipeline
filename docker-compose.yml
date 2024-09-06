@@ -23,6 +23,9 @@ services:
       - ./plugins:/opt/airflow/plugins
       - ./utils:/opt/airflow/utils
       - ./settings:/opt/airflow/settings
+      - ./keys:/opt/airflow/keys
+      - ./datas:/opt/airflow/datas
+
     ports:
       - "8080:8080"
     user: "50000:0"
