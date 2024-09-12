@@ -35,23 +35,22 @@ def remove_index(daily_data_split, rmindex=[1, 4]):
 
 def get_pk(data):
     return data.split("\n")[4].split(" ")
-def get_date(offset=-1): #台灣時間上8點後latest是前一天的data
+def get_date(offset): #台灣時間上8點後latest是前一天的data，以及資料統計固定延遲一天
     today = date.today()
     target_date = today + timedelta(days=offset)
     return target_date.isoformat()
-def get_file_path():
+def get_file_path(day):
     current_directory = os.path.dirname(os.path.abspath(__file__))
     parent_directory = os.path.dirname(current_directory)
     file_path = os.path.join(parent_directory, 'datas')
     os.makedirs(file_path, exist_ok=True)
-    today = datetime.now().strftime('%Y-%m-%d')
-    file_path = os.path.join(file_path, f"{today}_spotify_chart_tw.csv")
+    file_path = os.path.join(file_path, f"{day}_spotify_chart_tw.csv")
     return file_path
 @dag(
     dag_id="get_ranks_dag",
     default_args=default_args,
     description="Get daily rank data of Taiwanese tracks on Spotify.",
-    schedule_interval="*/6 * * * *",
+    schedule_interval="00 8 * * *",
     start_date=datetime(2024, 8, 1),
     catchup=False,
     tags=["spotify", "rank"]
@@ -59,7 +58,7 @@ def get_file_path():
 def get_ranks_dag():
 
     @task
-    def fetch_data():
+    def fetch_data(rank_day):
         driver = get_driver()
         try:
             log_in(driver)
@@ -68,10 +67,9 @@ def get_ranks_dag():
         
         columns = ["date", "rank", "track_name", "artist_names", "peak_rank", "previous_rank", "days_on_chart", "streams", "track_id", "artist_id"]
 
-        today = datetime.now().strftime('%Y-%m-%d')
-        print(f"Processing date: {today}")
+        print(f"Processing date: {rank_day}")
         
-        chart_url = f"https://charts.spotify.com/charts/view/regional-tw-daily/{today}"
+        chart_url = f"https://charts.spotify.com/charts/view/regional-tw-daily/{rank_day}"
         driver.get(chart_url)
         
         random_wait_time = random.uniform(5, 12)
@@ -111,9 +109,9 @@ def get_ranks_dag():
                 daily_data_cleans[track_number].append(track_id)
         
         df = pd.DataFrame(data=daily_data_cleans, columns=columns[1:])
-        df['date'] = today
+        df['date'] = rank_day
         df = df[columns]
-        file_path = get_file_path()
+        file_path = get_file_path(rank_day)
 
         
 
@@ -127,7 +125,7 @@ def get_ranks_dag():
         # 上傳GCS需要的key
         current_directory = os.path.dirname(os.path.abspath(__file__))
         parent_directory = os.path.dirname(current_directory)
-        file_path = os.path.join(parent_directory, 'keys')
+        file_path = os.path.join(parent_directory, 'keys','key_to_gcs.json')
         credentials = service_account.Credentials.from_service_account_file(
             f'{file_path}')
         
@@ -140,9 +138,9 @@ def get_ranks_dag():
         print(
             f"File {source_file_path} uploaded to {destination_blob_name}."
         )
-    today = get_date()
-    fetch_data()
-    destination_blob_name = f"uploads/{today[:4]}/{today}_spotify_chart_tw.csv"
+    rank_day = get_date(offset=-2)
+    fetch_data(rank_day)
+    destination_blob_name = f"uploads/{rank_day[:4]}/{rank_day}_spotify_chart_tw.csv"
     upload_rank_to_gcs("spotify_data_for_analysis",destination_blob_name)
 
 # Instantiate the DAG
